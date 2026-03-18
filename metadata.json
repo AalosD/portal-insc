@@ -1,0 +1,5 @@
+{
+  "name": "Portal de Inscripciones",
+  "description": "Sistema de gestión de inscripciones académicas con visualización de agenda en tiempo real y exportación a PDF.",
+  "requestFramePermissions": []
+}
