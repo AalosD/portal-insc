@@ -5,10 +5,12 @@ import AgendaTable from './components/AgendaTable';
 import SubjectModal from './components/SubjectModal';
 import { SUBJECTS } from './constants';
 import { Subject, Group } from './types';
-import { ChevronRight, Save, Printer, CheckCircle, AlertTriangle, X } from 'lucide-react';
+import { ChevronRight, Save, Printer, CheckCircle, AlertTriangle, X, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import html2pdf from 'html2pdf.js';
+import confetti from 'canvas-confetti';
+import { Trophy, Star, PartyPopper } from 'lucide-react';
 
 const COLORS = [
   "#1ABC9C", "#2ECC71", "#3498DB", "#9B59B6", "#34495E",
@@ -19,6 +21,7 @@ export default function App() {
   const [selectedGroups, setSelectedGroups] = useState<{ subject: Subject; group: Group; color: string }[]>([]);
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
+  const [isFinished, setIsFinished] = useState(false);
   const agendaRef = useRef<HTMLDivElement>(null);
 
   const checkOverlap = (newGroup: Group, currentGroups: { group: Group; subject: Subject }[]) => {
@@ -72,6 +75,34 @@ export default function App() {
     };
 
     html2pdf().set(opt).from(element).save();
+  };
+
+  const handleFinalize = () => {
+    if (selectedGroups.length === 0) {
+      setWarning("Debes seleccionar al menos una materia antes de finalizar.");
+      return;
+    }
+
+    setIsFinished(true);
+    
+    // Trigger confetti
+    const duration = 5 * 1000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 300 };
+
+    const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+    const interval: any = setInterval(function() {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval);
+      }
+
+      const particleCount = 50 * (timeLeft / duration);
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+    }, 250);
   };
 
   const totalCredits = selectedGroups.reduce((acc, item) => acc + item.subject.credits, 0);
@@ -130,7 +161,10 @@ export default function App() {
                     <Printer size={16} />
                     Imprimir
                   </button>
-                  <button className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-bold transition-colors shadow-lg shadow-[rgba(6,78,59,0.2)]">
+                  <button 
+                    onClick={handleFinalize}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-sm font-bold transition-colors shadow-lg shadow-[rgba(6,78,59,0.2)]"
+                  >
                     <CheckCircle size={16} />
                     Finalizar
                   </button>
@@ -200,6 +234,80 @@ export default function App() {
       </main>
 
       <AnimatePresence>
+        {isFinished && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-[rgba(31,51,84,0.8)] backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.5, y: 100, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              transition={{ type: "spring", damping: 15 }}
+              className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl relative overflow-hidden"
+            >
+              {/* Decorative elements */}
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 via-yellow-400 to-emerald-400" />
+              
+              <div className="mb-6 inline-flex p-4 bg-emerald-100 rounded-full text-emerald-600 relative">
+                <Trophy size={48} />
+                <motion.div 
+                  animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                  className="absolute -top-2 -right-2 bg-yellow-400 text-white p-1 rounded-full border-2 border-white"
+                >
+                  <Star size={16} fill="currentColor" />
+                </motion.div>
+              </div>
+
+              <h2 className="text-3xl font-black text-slate-800 mb-2">¡Felicidades, Alonso!</h2>
+              <p className="text-slate-600 mb-8 leading-relaxed">
+                Has completado tu proyecto de inscripción con éxito. Tu horario está listo para el periodo <span className="font-bold text-primary">Enero - Mayo 2026</span>.
+              </p>
+
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Materias</p>
+                  <p className="text-2xl font-black text-primary">{selectedGroups.length}</p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Créditos</p>
+                  <p className="text-2xl font-black text-emerald-600">{totalCredits}</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <button 
+                  onClick={handlePrint}
+                  className="w-full py-4 bg-primary text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors shadow-lg shadow-[rgba(31,51,84,0.3)]"
+                >
+                  <Download size={20} />
+                  Descargar Horario PDF
+                </button>
+                <button 
+                  onClick={() => setIsFinished(false)}
+                  className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-colors"
+                >
+                  Volver a editar
+                </button>
+              </div>
+
+              <div className="mt-6 flex justify-center gap-2">
+                {[1, 2, 3].map(i => (
+                  <motion.div
+                    key={i}
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.2 }}
+                  >
+                    <PartyPopper size={20} className="text-yellow-500 opacity-50" />
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
         {activeSubject && (
           <SubjectModal 
             subject={activeSubject}
