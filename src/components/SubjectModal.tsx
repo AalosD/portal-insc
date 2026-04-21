@@ -2,6 +2,7 @@ import React from 'react';
 import { Group, Subject } from '../types';
 import { X, User, MapPin, Clock, Users, BookOpen } from 'lucide-react';
 import { motion } from 'motion/react';
+import { cn } from '../lib/utils';
 
 interface SubjectModalProps {
   subject: Subject;
@@ -55,69 +56,93 @@ export default function SubjectModal({ subject, onClose, onSelectGroup, selected
           </h3>
 
           <div className="space-y-4">
-            {subject.groups.map((group) => (
-              <div 
-                key={group.id}
-                className={`p-4 rounded-xl border-2 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-                  selectedGroupId === group.id 
-                    ? 'border-primary bg-[rgba(31,51,84,0.05)] shadow-md' 
-                    : 'border-slate-100 hover:border-slate-200'
-                }`}
-              >
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase mb-1">Grupo & Docente</p>
-                    <div className="flex items-center gap-2">
-                      <span className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center font-bold text-primary">
-                        {group.name}
-                      </span>
-                      <p className="font-bold text-slate-700">{group.teacher}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase mb-1">Horario</p>
-                    <div className="space-y-1">
-                      {group.schedule.map((s, i) => (
-                        <p key={i} className="text-sm text-slate-600 flex items-center gap-1">
-                          <Clock size={14} />
-                          <span className="font-bold">{s.day}:</span> {s.start} - {s.end}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase mb-1">Ubicación & Cupo</p>
-                    <p className="text-sm text-slate-600 flex items-center gap-1">
-                      <MapPin size={14} /> {group.location}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      {group.enrolled}/{group.capacity} inscritos
-                    </p>
-                  </div>
-                </div>
-
-                <button 
-                  onClick={() => onSelectGroup(subject, group)}
-                  className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 ${
-                    selectedGroupId === group.id
-                      ? 'bg-emerald-500 text-white shadow-lg shadow-[#a7f3d0]'
-                      : 'bg-slate-100 text-slate-600 hover:bg-primary hover:text-white'
+            {subject.groups.map((group) => {
+              const isSelected = selectedGroupId === group.id;
+              const isSaturated = group.enrolled >= group.capacity;
+              
+              return (
+                <div 
+                  key={group.id}
+                  className={`p-4 rounded-xl border-2 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                    isSelected 
+                      ? 'border-primary bg-[rgba(31,51,84,0.05)] shadow-md' 
+                      : isSaturated
+                        ? 'border-slate-100 bg-slate-50 opacity-75'
+                        : 'border-slate-100 hover:border-slate-200'
                   }`}
                 >
-                  {selectedGroupId === group.id ? (
-                    <>
-                      <Users size={18} />
-                      Seleccionado
-                    </>
-                  ) : (
-                    <>
-                      <BookOpen size={18} />
-                      Seleccionar
-                    </>
-                  )}
-                </button>
-              </div>
-            ))}
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-xs font-bold text-slate-400 uppercase mb-1">Grupo & Docente</p>
+                      <div className="flex items-center gap-2">
+                        <span className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center font-bold text-primary">
+                          {group.name}
+                        </span>
+                        <p className="font-bold text-slate-700">{group.teacher}</p>
+                      </div>
+                      {isSaturated && !isSelected && (
+                        <span className="inline-block mt-2 px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-black uppercase rounded">
+                          Grupo saturado
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-400 uppercase mb-1">Horario</p>
+                      <div className="space-y-1">
+                        {group.schedule.map((s, i) => (
+                          <p key={i} className="text-sm text-slate-600 flex items-center gap-1">
+                            <Clock size={14} />
+                            <span className="font-bold">{s.day}:</span> {s.start} - {s.end}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-400 uppercase mb-1">Ubicación & Cupo</p>
+                      <p className="text-sm text-slate-600 flex items-center gap-1">
+                        <MapPin size={14} /> {group.location}
+                      </p>
+                      <p className={cn(
+                        "text-xs mt-1 font-bold",
+                        isSaturated ? "text-red-500" : "text-slate-400"
+                      )}>
+                        {group.enrolled}/{group.capacity} inscritos
+                      </p>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={() => onSelectGroup(subject, group)}
+                    disabled={isSaturated && !isSelected}
+                    className={cn(
+                      "px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2",
+                      isSelected
+                        ? "bg-orange-500 text-white shadow-lg shadow-orange-200 hover:bg-orange-600"
+                        : isSaturated
+                          ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                          : "bg-slate-100 text-slate-600 hover:bg-primary hover:text-white"
+                    )}
+                  >
+                    {isSelected ? (
+                      <>
+                        <X size={18} />
+                        Descartar grupo
+                      </>
+                    ) : isSaturated ? (
+                      <>
+                        <X size={18} />
+                        Sin cupo
+                      </>
+                    ) : (
+                      <>
+                        <BookOpen size={18} />
+                        Seleccionar
+                      </>
+                    )}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       </motion.div>

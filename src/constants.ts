@@ -197,7 +197,7 @@ export const SUBJECTS: Subject[] = [
         modality: 'Presencial',
         credits: 10,
         capacity: 20,
-        enrolled: 18,
+        enrolled: 20,
         schedule: [
           { day: 'Lun', start: '17:00', end: '19:00' },
           { day: 'Mié', start: '17:00', end: '19:00' }
@@ -283,7 +283,7 @@ export const SUBJECTS: Subject[] = [
         modality: 'Presencial',
         credits: 10,
         capacity: 30,
-        enrolled: 22,
+        enrolled: 30,
         schedule: [
           { day: 'Mar', start: '11:00', end: '13:00' },
           { day: 'Jue', start: '11:00', end: '13:00' }
@@ -497,7 +497,7 @@ export const SUBJECTS: Subject[] = [
         modality: 'Presencial',
         credits: 10,
         capacity: 25,
-        enrolled: 20,
+        enrolled: 25,
         schedule: [
           { day: 'Mar', start: '15:00', end: '17:00' },
           { day: 'Jue', start: '15:00', end: '17:00' }
